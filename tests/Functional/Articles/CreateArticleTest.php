@@ -15,7 +15,7 @@ class CreateArticleTest extends BaseTestCase
     public function un_authenticated_user_may_post_new_article()
     {
         $user = $this->createUserWithValidToken();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $user->token];
+        $headers = ['Authorization' => 'Token ' . $user->token];
         $payload = [
             'article' => [
                 'title'       => 'How to train your dragon',
@@ -43,7 +43,7 @@ class CreateArticleTest extends BaseTestCase
     public function create_article_require_title()
     {
         $user = $this->createUserWithValidToken();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $user->token];
+        $headers = ['Authorization' => 'Token ' . $user->token];
         $payload = [
             'article' => [
                 'description' => 'Ever wonder how?',
@@ -62,7 +62,7 @@ class CreateArticleTest extends BaseTestCase
     public function create_article_require_description()
     {
         $user = $this->createUserWithValidToken();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $user->token];
+        $headers = ['Authorization' => 'Token ' . $user->token];
         $payload = [
             'article' => [
                 'title' => 'How to train your dragon',
@@ -81,7 +81,7 @@ class CreateArticleTest extends BaseTestCase
     public function create_article_require_body()
     {
         $user = $this->createUserWithValidToken();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $user->token];
+        $headers = ['Authorization' => 'Token ' . $user->token];
         $payload = [
             'article' => [
                 'title'       => 'How to train your dragon',
@@ -100,7 +100,7 @@ class CreateArticleTest extends BaseTestCase
     public function user_can_add_tags_when_creating_articles()
     {
         $user = $this->createUserWithValidToken();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $user->token];
+        $headers = ['Authorization' => 'Token ' . $user->token];
         $payload = [
             'article' => [
                 'title'       => 'How to train your dragon',
@@ -121,7 +121,7 @@ class CreateArticleTest extends BaseTestCase
     public function creating_new_articles_does_not_duplicate_slugs()
     {
         $user = $this->createUserWithValidToken();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $user->token];
+        $headers = ['Authorization' => 'Token ' . $user->token];
 
         $existingArticle = Article::create([
             'title'       => $title = 'How to train your dragon',

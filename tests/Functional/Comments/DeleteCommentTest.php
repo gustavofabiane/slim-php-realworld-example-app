@@ -15,7 +15,7 @@ class DeleteCommentTest extends BaseTestCase
     {
         $user = $this->createUserWithValidToken();
         $comment = $this->createComment(['user_id' => $user->id]);
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $user->token];
+        $headers = ['Authorization' => 'Token ' . $user->token];
 
         $response = $this->request('DELETE',
             "/api/articles/$comment->article->slug/comments/$comment->id",
@@ -43,7 +43,7 @@ class DeleteCommentTest extends BaseTestCase
     {
         $comment = $this->createComment();
         $unauthorizedUser = $this->createUserWithValidToken();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $unauthorizedUser->token];
+        $headers = ['Authorization' => 'Token ' . $unauthorizedUser->token];
 
         $response = $this->request('DELETE',
             "/api/articles/$comment->article->slug/comments/$comment->id",

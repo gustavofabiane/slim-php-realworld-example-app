@@ -34,7 +34,7 @@ class ShowSingleArticleTest extends BaseTestCase
         $user = $this->createUser();
         $requestUser = $this->createUserWithValidToken();
         $requestUser->follow($user->id);
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $requestUser->token];
+        $headers = ['Authorization' => 'Token ' . $requestUser->token];
 
         $article = $this->createArticle(['user_id' => $user->id]);
 

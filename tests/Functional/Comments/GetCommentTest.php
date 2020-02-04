@@ -36,7 +36,7 @@ class GetCommentTest extends BaseTestCase
         $user = $this->createUser();
         $requestUser = $this->createUserWithValidToken();
         $requestUser->follow($user->id);
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $requestUser->token];
+        $headers = ['Authorization' => 'Token ' . $requestUser->token];
 
         $article = $this->createArticle(['user_id' => $user->id]);
         $comment = $this->createComment(['user_id' => $user->id, 'article_id' => $article->id]);
@@ -60,7 +60,7 @@ class GetCommentTest extends BaseTestCase
     public function get_comment_returns_401_when_an_invalid_token_is_attached()
     {
         $user = $this->createUser();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token Invalid Token'];
+        $headers = ['Authorization' => 'Token Invalid Token'];
         $article = $this->createArticle(['user_id' => $user->id]);
 
         $response = $this->request(

@@ -15,7 +15,7 @@ class DeleteArticleTest extends BaseTestCase
     {
         $user = $this->createUserWithValidToken();
         $article = $this->createArticle(['user_id' => $user->id]);
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $user->token];
+        $headers = ['Authorization' => 'Token ' . $user->token];
 
         $response = $this->request('DELETE', "/api/articles/$article->slug", null, $headers);
 
@@ -38,7 +38,7 @@ class DeleteArticleTest extends BaseTestCase
     {
         $article = $this->createArticle();
         $unauthorizedUser = $this->createUserWithValidToken();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $unauthorizedUser->token];
+        $headers = ['Authorization' => 'Token ' . $unauthorizedUser->token];
 
         $response = $this->request('PUT', "/api/articles/$article->slug", null, $headers);
 

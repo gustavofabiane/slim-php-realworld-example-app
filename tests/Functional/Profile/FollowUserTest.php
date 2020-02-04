@@ -16,7 +16,7 @@ class FollowUserTest extends BaseTestCase
         $user = $this->createUser();
         $requestUser = $this->createUserWithValidToken();
 
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $requestUser->token];
+        $headers = ['Authorization' => 'Token ' . $requestUser->token];
 
         $response = $this->request(
             'POST',
@@ -33,7 +33,7 @@ class FollowUserTest extends BaseTestCase
         $user = $this->createUser();
         $requestUser = $this->createUserWithValidToken();
 
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $requestUser->token];
+        $headers = ['Authorization' => 'Token ' . $requestUser->token];
 
         $this->request(
             'POST',
@@ -75,7 +75,7 @@ class FollowUserTest extends BaseTestCase
         $requestUser = $this->createUserWithValidToken();
         $requestUser->follow($user->id);
         $this->assertTrue($requestUser->isFollowing($user->id));
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $requestUser->token];
+        $headers = ['Authorization' => 'Token ' . $requestUser->token];
 
         $response = $this->request(
             'DELETE',

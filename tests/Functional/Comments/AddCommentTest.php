@@ -15,7 +15,7 @@ class AddCommentTest extends BaseTestCase
     {
         $article = $this->createArticle();
         $user = $this->createUserWithValidToken();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $user->token];
+        $headers = ['Authorization' => 'Token ' . $user->token];
 
         $payload = [
             'comment' => [

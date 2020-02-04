@@ -16,6 +16,9 @@
   # absolute physical path to the directory that contains this htaccess file.
   # RewriteBase /
 
+  # Provide Authorization header 
+  RewriteRule .* - [env=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteRule ^ index.php [QSA,L]
 </IfModule>

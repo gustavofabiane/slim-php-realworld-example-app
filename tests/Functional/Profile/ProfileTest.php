@@ -28,7 +28,7 @@ class ProfileTest extends BaseTestCase
     {
         $user = $this->createUser();
         $requestUser = $this->createUserWithValidToken();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $requestUser->token];
+        $headers = ['Authorization' => 'Token ' . $requestUser->token];
 
         $response = $this->request('GET', '/api/profiles/' . $user->username, null, $headers);
         $body = json_decode((string)$response->getBody(), true);
@@ -41,7 +41,7 @@ class ProfileTest extends BaseTestCase
     public function get_profile_returns_401_when_an_invalid_token_is_attached()
     {
         $user = $this->createUser();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token Invalid Token'];
+        $headers = ['Authorization' => 'Token Invalid Token'];
 
         $response = $this->request('GET', '/api/profiles/' . $user->username, null, $headers);
 
@@ -56,7 +56,7 @@ class ProfileTest extends BaseTestCase
     {
         $user = $this->createUser();
         $requestUser = $this->createUserWithValidToken();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $requestUser->token];
+        $headers = ['Authorization' => 'Token ' . $requestUser->token];
 
         $response = $this->request('GET', '/api/profiles/' . $user->username, null, $headers);
         $body = json_decode((string)$response->getBody(), true);

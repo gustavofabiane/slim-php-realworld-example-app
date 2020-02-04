@@ -37,7 +37,7 @@ class OptionalAuth implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($request->hasHeader('HTTP_AUTHORIZATION') || $request->hasHeader('Authorization')) {
+        if ($request->hasHeader('Authorization')) {
             return call_user_func([$this->jwtMiddleware, 'process'], $request, $handler);
         }
         

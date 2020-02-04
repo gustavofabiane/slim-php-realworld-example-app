@@ -15,7 +15,7 @@ class ManageUserTest extends BaseTestCase
     {
         $user = $this->createUser();
         $token = $this->getValidToken($user);
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $token];
+        $headers = ['Authorization' => 'Token ' . $token];
 
         $response = $this->request('GET', '/api/user', null, $headers);
 
@@ -42,7 +42,7 @@ class ManageUserTest extends BaseTestCase
             'bio'      => null,
         ]);
         $this->assertEquals('superUserDo', $user->username);
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $user->token];
+        $headers = ['Authorization' => 'Token ' . $user->token];
 
         $payload = [
             'user' =>

@@ -16,7 +16,7 @@ class UpdateArticleTest extends BaseTestCase
     {
         $user = $this->createUserWithValidToken();
         $article = $this->createArticle(['user_id' => $user->id]);
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $user->token];
+        $headers = ['Authorization' => 'Token ' . $user->token];
         $payload = [
             'article' => [
                 'description' => 'Update description',
@@ -44,7 +44,7 @@ class UpdateArticleTest extends BaseTestCase
     {
         $article = $this->createArticle();
         $unauthorizedUser = $this->createUserWithValidToken();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $unauthorizedUser->token];
+        $headers = ['Authorization' => 'Token ' . $unauthorizedUser->token];
         $payload = [
             'article' => [
                 'description' => 'Update description',

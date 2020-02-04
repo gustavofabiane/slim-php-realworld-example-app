@@ -15,7 +15,7 @@ class FavoriteTest extends BaseTestCase
     {
         $article = $this->createArticle();
         $user = $this->createUserWithValidToken();
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $user->token];
+        $headers = ['Authorization' => 'Token ' . $user->token];
 
         $response = $this->request(
             'POST',
@@ -45,7 +45,7 @@ class FavoriteTest extends BaseTestCase
         $article = $this->createArticle();
         $user->favoriteArticles()->sync($article->id, false);
         $this->assertEquals(1, $article->favorites()->count());
-        $headers = ['HTTP_AUTHORIZATION' => 'Token ' . $user->token];
+        $headers = ['Authorization' => 'Token ' . $user->token];
 
         $response = $this->request('DELETE',
             "/api/articles/$article->slug/favorite",
