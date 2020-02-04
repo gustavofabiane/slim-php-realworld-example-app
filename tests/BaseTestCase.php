@@ -6,11 +6,8 @@ use Conduit\Models\Article;
 use Conduit\Models\Comment;
 use Conduit\Models\User;
 use Faker\Factory;
+use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;
-use Slim\App;
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\Environment;
 
 /**
  * This is an example class that shows how you could set up a method that
@@ -69,36 +66,23 @@ abstract class BaseTestCase extends TestCase
      *
      * @param array             $headers
      *
-     * @return \Psr\Http\Message\ResponseInterface|\Slim\Http\Response
+     * @return \Psr\Http\Message\ResponseInterface
      */
     public function runApp($requestMethod, $requestUri, $requestData = null, $headers = [])
     {
-        // Create a mock environment for testing with
-        $environment = Environment::mock(
-            array_merge(
-                [
-                    'REQUEST_METHOD'   => $requestMethod,
-                    'REQUEST_URI'      => $requestUri,
-                    'Content-Type'     => 'application/json',
-                    'X-Requested-With' => 'XMLHttpRequest',
-                ],
-                $headers
-            )
-        );
-
-        // Set up a request object based on the environment
-        $request = Request::createFromEnvironment($environment);
+        // Create request
+        $request = new ServerRequest($requestMethod, $requestUri, $headers + [
+            'Content-Type'     => 'application/json',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]);
 
         // Add request data, if it exists
         if (isset($requestData)) {
             $request = $request->withParsedBody($requestData);
         }
 
-        // Set up a response object
-        $response = new Response();
-
         // Process the application and Return the response
-        return $this->app->process($request, $response);
+        return $this->app->handle($request);
     }
 
     /**
@@ -109,7 +93,7 @@ abstract class BaseTestCase extends TestCase
      * @param null  $requestData
      * @param array $headers
      *
-     * @return \Psr\Http\Message\ResponseInterface|\Slim\Http\Response
+     * @return \Psr\Http\Message\ResponseInterface
      */
     public function request($requestMethod, $requestUri, $requestData = null, $headers = [])
     {
@@ -211,21 +195,6 @@ abstract class BaseTestCase extends TestCase
 
     protected function createApplication()
     {
-        // Use the application settings
-        $settings = require __DIR__ . '/../src/settings.php';
-
-        // Instantiate the application
-        $this->app = $app = new App($settings);
-
-        // Set up dependencies
-        require ROOT . 'src/dependencies.php';
-
-        // Register middleware
-        if ($this->withMiddleware) {
-            require ROOT . 'src/middleware.php';
-        }
-
-        // Register routes
-        require ROOT . 'src/routes.php';
+        $this->app = require __DIR__ . '/../src/app.php';
     }
 }
