@@ -1,11 +1,12 @@
 <?php
 
 require_once './vendor/autoload.php';
-$settings = require './src/settings.php';
-$app = new \Slim\App($settings);
+
+/** @var Slim\App $app */
+$app = require './src/app.php';
+
 $container = $app->getContainer();
-$container->register(new \Conduit\Services\Database\EloquentServiceProvider());
-$config = $container['settings']['database'];
+$config = $container->get('settings')['database'];
 
 return [
     'paths'                => [
