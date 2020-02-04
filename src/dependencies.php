@@ -1,5 +1,6 @@
 <?php
 
+use Conduit\Middleware\Cors;
 use Monolog\Logger;
 use DI\ContainerBuilder;
 use Conduit\Services\Auth\Auth;
@@ -7,10 +8,12 @@ use Respect\Validation\Validator;
 use Monolog\Handler\StreamHandler;
 use Monolog\Processor\UidProcessor;
 use Conduit\Middleware\OptionalAuth;
+use Conduit\Middleware\RemoveTrailingSlash;
 use Slim\Middleware\JwtAuthentication;
 use League\Fractal\Manager as FractalManager;
 use League\Fractal\Serializer\ArraySerializer;
 use Illuminate\Database\Capsule\Manager as IlluminateDatabase;
+use Slim\Factory\Psr17\NyholmPsr17Factory;
 
 /**
  * Application dependencies definitions
@@ -76,5 +79,20 @@ return function (ContainerBuilder $containerBuilder): void {
         'auth' => function ($c) {
             return new Auth($c->get('db'), $c->get('settings'));
         }
+    ]);
+
+    // Middleware definitions
+    $containerBuilder->addDefinitions([
+
+        // Remove trailing slash from URI path
+        RemoveTrailingSlash::class => function () {
+            $responseFactory = NyholmPsr17Factory::getResponseFactory();
+            return new RemoveTrailingSlash($responseFactory);
+        },
+
+        // CORS middleware
+        Cors::class => function ($c) {
+            return new Cors($c->get('settings')['cors']);
+        },
     ]);
 };

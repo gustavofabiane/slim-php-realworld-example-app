@@ -1,35 +1,29 @@
 <?php
-// Application middleware
 
-// e.g: $app->add(new \Slim\Csrf\Guard);
+use Slim\App;
+use Conduit\Middleware\Cors;
+use Conduit\Exceptions\ErrorHandler;
+use Conduit\Middleware\RemoveTrailingSlash;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
+/**
+ * Application middleware
+ */
+return function (App $app): void {
+    $settings = $app->getContainer()->get('settings');
 
-$app->add(function (Request $request, Response $response, callable $next) {
-    $uri = $request->getUri();
-    $path = $uri->getPath();
-    if ($path != '/' && substr($path, -1) == '/') {
-        // permanently redirect paths with a trailing slash
-        // to their non-trailing counterpart
-        $uri = $uri->withPath(substr($path, 0, -1));
+    $errorMiddleware = $app->addErrorMiddleware(
+        $settings['error']['display_error_details'],
+        $settings['error']['log_errors'],
+        $settings['error']['log_error_details'],
+    );
+    $errorMiddleware->setDefaultErrorHandler(new ErrorHandler(
+        $app->getCallableResolver(),
+        $app->getResponseFactory()
+    ));
 
-        if($request->getMethod() == 'GET') {
-            return $response->withRedirect((string)$uri, 301);
-        }
-        else {
-            return $next($request->withUri($uri), $response);
-        }
-    }
+    $app->addBodyParsingMiddleware();
+    $app->addRoutingMiddleware();
 
-    return $next($request, $response);
-});
-
-$app->add(function ($req, $res, $next) {
-    $response = $next($req, $res);
-
-    return $response
-        ->withHeader('Access-Control-Allow-Origin', $this->get('settings')['cors'])
-        ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
-        ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-});
+    $app->add(RemoveTrailingSlash::class);
+    $app->add(Cors::class);
+};
