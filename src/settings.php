@@ -10,11 +10,8 @@ if (file_exists(ROOT . '.env')) {
     $dotenv->load();
 }
 
-
 return [
     'settings' => [
-        'displayErrorDetails'    => getenv('APP_DEBUG') === 'true' ? true : false, // set to false in production
-        'addContentLengthHeader' => false, // Allow the web server to send the content-length header
 
         // App Settings
         'app'                    => [
@@ -23,9 +20,11 @@ return [
             'env'  => getenv('APP_ENV'),
         ],
 
-        // Renderer settings
-        'renderer'               => [
-            'template_path' => __DIR__ . '/../templates/',
+        // Error Handling Settings
+        'error' => [
+            'display_error_details' => getenv('APP_DEBUG') === 'true', // set to false in production
+            'log_errors' => true,
+            'log_error_details' => getenv('APP_DEBUG') !== 'true'
         ],
 
         // Monolog settings
