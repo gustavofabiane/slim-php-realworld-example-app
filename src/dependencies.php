@@ -1,65 +1,80 @@
 <?php
-// DIC configuration
 
-/** @var Pimple\Container $container */
-
+use Monolog\Logger;
+use DI\ContainerBuilder;
+use Conduit\Services\Auth\Auth;
+use Respect\Validation\Validator;
+use Monolog\Handler\StreamHandler;
+use Monolog\Processor\UidProcessor;
 use Conduit\Middleware\OptionalAuth;
-use League\Fractal\Manager;
+use Slim\Middleware\JwtAuthentication;
+use League\Fractal\Manager as FractalManager;
 use League\Fractal\Serializer\ArraySerializer;
+use Illuminate\Database\Capsule\Manager as IlluminateDatabase;
 
-$container = $app->getContainer();
+/**
+ * Application dependencies definitions
+ */
+return function (ContainerBuilder $containerBuilder): void {
 
+    // Application Dependencies
+    $containerBuilder->addDefinitions([
+        
+        // Monolog
+        'logger' => function ($c) {
+            $settings = $c->get('settings')['logger'];
+            $logger = new Logger($settings['name']);
+            $logger->pushProcessor(new UidProcessor());
+            $logger->pushHandler(new StreamHandler($settings['path'], $settings['level']));
+        
+            return $logger;
+        },
 
-// Error Handler
-$container['errorHandler'] = function ($c) {
-    return new \Conduit\Exceptions\ErrorHandler($c['settings']['displayErrorDetails']);
-};
+        // JWT Middleware
+        'jwt' => function (array $settings) {
+            return new JwtAuthentication($settings['jwt']);
+        },
 
-// App Service Providers
-$container->register(new \Conduit\Services\Database\EloquentServiceProvider());
-$container->register(new \Conduit\Services\Auth\AuthServiceProvider());
+        // Optional Auth Middleware
+        'optionalAuth' => function ($c) {
+            return new OptionalAuth($c);
+        },
 
-// view renderer
-$container['renderer'] = function ($c) {
-    $settings = $c->get('settings')['renderer'];
+        // Request Validator
+        'validator' => function ($c) {
+            Validator::with('\\Conduit\\Validation\\Rules');
+            return new Validator();
+        },
 
-    return new Slim\Views\PhpRenderer($settings['template_path']);
-};
+        // Fractal
+        'fractal' => function ($c) {
+            $manager = new FractalManager();
+            $manager->setSerializer(new ArraySerializer());
+            return $manager;
+        },
 
-// monolog
-$container['logger'] = function ($c) {
-    $settings = $c->get('settings')['logger'];
-    $logger = new Monolog\Logger($settings['name']);
-    $logger->pushProcessor(new Monolog\Processor\UidProcessor());
-    $logger->pushHandler(new Monolog\Handler\StreamHandler($settings['path'], $settings['level']));
+        // Database Manager
+        'db' => function ($c) {
+            $capsule = new IlluminateDatabase();
 
-    return $logger;
-};
+            $config = $c->get('settings')['database'];
+            $capsule->addConnection([
+                'driver'    => $config['driver'],
+                'host'      => $config['host'],
+                'database'  => $config['database'],
+                'username'  => $config['username'],
+                'password'  => $config['password'],
+                'charset'   => 'utf8',
+                'collation' => 'utf8_unicode_ci',
+                'prefix'    => '',
+            ]);
 
-// Jwt Middleware
-$container['jwt'] = function ($c) {
+            return $capsule;
+        },
 
-    $jws_settings = $c->get('settings')['jwt'];
-
-    return new \Slim\Middleware\JwtAuthentication($jws_settings);
-};
-
-$container['optionalAuth'] = function ($c) {
-  return new OptionalAuth($c);
-};
-
-
-// Request Validator
-$container['validator'] = function ($c) {
-    \Respect\Validation\Validator::with('\\Conduit\\Validation\\Rules');
-
-    return new \Conduit\Validation\Validator();
-};
-
-// Fractal
-$container['fractal'] = function ($c) {
-    $manager = new Manager();
-    $manager->setSerializer(new ArraySerializer());
-
-    return $manager;
+        // Authorization service
+        'auth' => function ($c) {
+            return new Auth($c->get('db'), $c->get('settings'));
+        }
+    ]);
 };
