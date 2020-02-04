@@ -1,19 +1,19 @@
 <?php
 
-use Conduit\Middleware\Cors;
 use Monolog\Logger;
 use DI\ContainerBuilder;
+use Conduit\Middleware\Cors;
 use Conduit\Services\Auth\Auth;
 use Respect\Validation\Validator;
 use Monolog\Handler\StreamHandler;
 use Monolog\Processor\UidProcessor;
 use Conduit\Middleware\OptionalAuth;
+use Tuupola\Middleware\JwtAuthentication;
+use Slim\Factory\Psr17\NyholmPsr17Factory;
 use Conduit\Middleware\RemoveTrailingSlash;
-use Slim\Middleware\JwtAuthentication;
 use League\Fractal\Manager as FractalManager;
 use League\Fractal\Serializer\ArraySerializer;
 use Illuminate\Database\Capsule\Manager as IlluminateDatabase;
-use Slim\Factory\Psr17\NyholmPsr17Factory;
 
 /**
  * Application dependencies definitions
@@ -33,24 +33,14 @@ return function (ContainerBuilder $containerBuilder): void {
             return $logger;
         },
 
-        // JWT Middleware
-        'jwt' => function (array $settings) {
-            return new JwtAuthentication($settings['jwt']);
-        },
-
-        // Optional Auth Middleware
-        'optionalAuth' => function ($c) {
-            return new OptionalAuth($c);
-        },
-
         // Request Validator
-        'validator' => function ($c) {
+        'validator' => function () {
             Validator::with('\\Conduit\\Validation\\Rules');
             return new Validator();
         },
 
         // Fractal
-        'fractal' => function ($c) {
+        'fractal' => function () {
             $manager = new FractalManager();
             $manager->setSerializer(new ArraySerializer());
             return $manager;
@@ -83,6 +73,16 @@ return function (ContainerBuilder $containerBuilder): void {
 
     // Middleware definitions
     $containerBuilder->addDefinitions([
+
+        // JWT Middleware
+        'jwt' => function ($c) {
+            return new JwtAuthentication($c->get('settings')['jwt']);
+        },
+
+        // Optional Auth Middleware
+        'optionalAuth' => function ($c) {
+            return new OptionalAuth($c->get('jwt'));
+        },
 
         // Remove trailing slash from URI path
         RemoveTrailingSlash::class => function () {

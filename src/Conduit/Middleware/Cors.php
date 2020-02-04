@@ -27,11 +27,11 @@ class Cors implements MiddlewareInterface
     /**
      * Cors Constructor
      *
-     * @param array $settings
+     * @param array|string $settings
      */
-    public function __construct(array $settings)
+    public function __construct($allowedOrigins)
     {
-        $this->allowedOrigins = $settings['cors'];
+        $this->allowedOrigins = $allowedOrigins;
     }
     
     /**

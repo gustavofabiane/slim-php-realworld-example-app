@@ -2,46 +2,45 @@
 
 namespace Conduit\Middleware;
 
-use Interop\Container\ContainerInterface;
 use Slim\DeferredCallable;
+use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use Tuupola\Middleware\JwtAuthentication;
 
-class OptionalAuth
+class OptionalAuth implements MiddlewareInterface
 {
 
     /**
-     * @var \Interop\Container\ContainerInterface
+     * @var ContainerInterface
      */
-    private $container;
+    private $jwtMiddleware;
 
     /**
-     * OptionalAuth constructor.
+     * OptionalAuth constructor
      *
-     * @param \Interop\Container\ContainerInterface $container
-     *
-     * @internal param \Slim\Middleware\JwtAuthentication $jwt
+     * @param JwtAuthentication $jwtMiddleware
      */
-    public function __construct(ContainerInterface $container)
+    public function __construct(JwtAuthentication $jwtMiddleware)
     {
-        $this->container = $container;
+        $this->jwtMiddleware = $jwtMiddleware;
     }
 
     /**
      * OptionalAuth middleware invokable class to verify JWT token when present in Request
      *
-     * @param  \Psr\Http\Message\ServerRequestInterface $request  PSR7 request
-     * @param  \Psr\Http\Message\ResponseInterface      $response PSR7 response
-     * @param  callable                                 $next     Next middleware
-     *
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param ServerRequestInterface $request
+     * @param RequestHandlerInterface $handler
+     * @return ResponseInterface
      */
-    public function __invoke($request, $response, $next)
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($request->hasHeader('HTTP_AUTHORIZATION')) {
-            $callable = new DeferredCallable($this->container->get('jwt'), $this->container);
-
-            return call_user_func($callable, $request, $response, $next);
+        if ($request->hasHeader('HTTP_AUTHORIZATION') || $request->hasHeader('Authorization')) {
+            return call_user_func([$this->jwtMiddleware, 'process'], $request, $handler);
         }
-
-        return $next($request, $response);
+        
+        return $handler->handle($request);
     }
 }
