@@ -2,12 +2,11 @@
 
 namespace Conduit\Services\Auth;
 
-use Conduit\Models\User;
 use DateTime;
 use Firebase\JWT\JWT;
+use Conduit\Models\User;
 use Illuminate\Database\Capsule\Manager;
-use Slim\Collection;
-use Slim\Http\Request;
+use Psr\Http\Message\ServerRequestInterface;
 
 class Auth
 {
@@ -29,7 +28,7 @@ class Auth
      * @param \Illuminate\Database\Capsule\Manager $db
      * @param array|\Slim\Collection               $appConfig
      */
-    public function __construct(Manager $db, Collection $appConfig)
+    public function __construct(Manager $db, array $appConfig)
     {
         $this->db = $db;
         $this->appConfig = $appConfig;
@@ -87,11 +86,11 @@ class Auth
     /**
      * Retrieve a user by the JWT token from the request
      *
-     * @param \Slim\Http\Request $request
+     * @param ServerRequestInterface $request
      *
      * @return User|null
      */
-    public function requestUser(Request $request)
+    public function requestUser(ServerRequestInterface $request)
     {
         // Should add more validation to the present and validity of the token?
         if ($token = $request->getAttribute('token')) {
