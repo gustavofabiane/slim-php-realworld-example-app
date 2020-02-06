@@ -13,6 +13,9 @@
     ],
     "require": {
         "php": ">=7.2",
+        "ext-json": "*",
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*",
         "slim/slim": "^4.0",
         "monolog/monolog": "^1.23",
         "illuminate/database": "^5.5",
@@ -27,6 +30,7 @@
         "php-di/php-di": "^6.0"
     },
     "require-dev": {
+        "ext-pdo_sqlite": "*",
         "phpunit/phpunit": "^6.4"
     },
     "autoload": {
