@@ -21,16 +21,16 @@ class Validator
      */
     public function validate(ServerRequestInterface $request, array $rules)
     {
+        $data = (array) $request->getParsedBody() + $request->getQueryParams();
+
         /** @var \Respect\Validation\Validator $rule */
         foreach ($rules as $field => $rule) {
             try {
-                $rule->setName($field)->assert($request->getParam($field));
+                $rule->setName($field)->assert($data[$field] ?? null);
             } catch (NestedValidationException $e) {
                 $this->errors[$field] = $e->getMessages();
             }
         }
-        $_SESSION['errors'] = $this->errors;
-
 
         return $this;
     }
@@ -53,8 +53,6 @@ class Validator
                 $this->errors[$field] = $e->getMessages();
             }
         }
-        $_SESSION['errors'] = $this->errors;
-
 
         return $this;
     }
