@@ -9,7 +9,7 @@ class HomepageTest extends BaseTestCase
     /**
      * Test that the index route returns a rendered response containing the text 'SlimFramework' but not a greeting
      */
-    public function testGetHomepageWithoutName()
+    public function testGetHomepage()
     {
         $response = $this->runApp('GET', '/');
 
