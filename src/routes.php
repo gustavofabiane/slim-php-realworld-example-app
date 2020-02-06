@@ -2,9 +2,7 @@
 
 use Slim\App;
 use Conduit\Models\Tag;
-use Psr\Http\Message\ResponseInterface;
 use Conduit\Controllers\User\UserController;
-use Psr\Http\Message\ServerRequestInterface;
 use Conduit\Controllers\Auth\LoginController;
 use Conduit\Controllers\User\ProfileController;
 use Conduit\Controllers\Auth\RegisterController;
@@ -12,6 +10,7 @@ use Slim\Interfaces\RouteCollectorProxyInterface;
 use Conduit\Controllers\Article\ArticleController;
 use Conduit\Controllers\Article\CommentController;
 use Conduit\Controllers\Article\FavoriteController;
+use Psr\Http\Message\ResponseFactoryInterface;
 
 return function (App $app): void {
 
@@ -76,13 +75,21 @@ return function (App $app): void {
             ->setName('favorite.destroy');
 
         // Tags Route
-        $router->get('/tags', function (ServerRequestInterface $request, ResponseInterface $response) {
-            $response->getBody()->rewind();
+        $router->get('/tags', function () {
+            $response = $this->get(ResponseFactoryInterface::class)->createResponse();
             $response->getBody()->write(json_encode([
                 'tags' => Tag::all('title')->pluck('title'),
             ]));
 
             return $response->withHeader('Content-Type', 'application/json');
         });
+    });
+
+    // Home page
+    $app->get('/', function () {
+        $response = $this->get(ResponseFactoryInterface::class)->createResponse();
+        $response->getBody()->write('Conduit - Slim Framework - Real World App');
+
+        return $response;
     });
 };

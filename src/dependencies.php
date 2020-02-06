@@ -1,18 +1,23 @@
 <?php
 
 use Monolog\Logger;
+use function DI\get;
 use DI\ContainerBuilder;
 use Conduit\Middleware\Cors;
+use Psr\Log\LoggerInterface;
 use Conduit\Services\Auth\Auth;
-use Respect\Validation\Validator;
+use Conduit\Validation\Validator;
 use Monolog\Handler\StreamHandler;
 use Monolog\Processor\UidProcessor;
 use Conduit\Middleware\OptionalAuth;
 use Tuupola\Middleware\JwtAuthentication;
 use Slim\Factory\Psr17\NyholmPsr17Factory;
 use Conduit\Middleware\RemoveTrailingSlash;
+use Respect\Validation\Validator as Respect;
 use League\Fractal\Manager as FractalManager;
+
 use League\Fractal\Serializer\ArraySerializer;
+use Psr\Http\Message\ResponseFactoryInterface;
 use Illuminate\Database\Capsule\Manager as IlluminateDatabase;
 
 /**
@@ -20,10 +25,18 @@ use Illuminate\Database\Capsule\Manager as IlluminateDatabase;
  */
 return function (ContainerBuilder $containerBuilder): void {
 
+    // Slim dependencies
+    $containerBuilder->addDefinitions([
+        ResponseFactoryInterface::class => function () {
+            return NyholmPsr17Factory::getResponseFactory();
+        },
+    ]);
+
     // Application Dependencies
     $containerBuilder->addDefinitions([
         
         // Monolog
+        LoggerInterface::class => get('logger'),
         'logger' => function ($c) {
             $settings = $c->get('settings')['logger'];
             $logger = new Logger($settings['name']);
@@ -34,12 +47,14 @@ return function (ContainerBuilder $containerBuilder): void {
         },
 
         // Request Validator
+        Validator::class => get('validator'),
         'validator' => function () {
-            Validator::with('\\Conduit\\Validation\\Rules');
+            Respect::with('\\Conduit\\Validation\\Rules');
             return new Validator();
         },
 
         // Fractal
+        FractalManager::class => get('fractal'),
         'fractal' => function () {
             $manager = new FractalManager();
             $manager->setSerializer(new ArraySerializer());
@@ -47,6 +62,7 @@ return function (ContainerBuilder $containerBuilder): void {
         },
 
         // Database Manager
+        IlluminateDatabase::class => get('db'),
         'db' => function ($c) {
             $capsule = new IlluminateDatabase();
 
@@ -66,9 +82,10 @@ return function (ContainerBuilder $containerBuilder): void {
         },
 
         // Authorization service
+        Auth::class => get('auth'),
         'auth' => function ($c) {
             return new Auth($c->get('db'), $c->get('settings'));
-        }
+        },
     ]);
 
     // Middleware definitions

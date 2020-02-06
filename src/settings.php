@@ -23,8 +23,8 @@ return [
         // Error Handling Settings
         'error' => [
             'display_error_details' => getenv('APP_DEBUG') === 'true', // set to false in production
-            'log_errors' => true,
-            'log_error_details' => getenv('APP_DEBUG') !== 'true'
+            'log_errors'            => getenv('APP_DEBUG') !== 'true',
+            'log_error_details'     => getenv('APP_DEBUG') !== 'true',
         ],
 
         // Monolog settings

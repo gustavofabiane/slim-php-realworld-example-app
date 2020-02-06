@@ -15,10 +15,7 @@ $dependencies = require 'dependencies.php';
 $dependencies($containerBuilder);
 
 // Instantiate the app
-$app = AppFactory::create(
-    NyholmPsr17Factory::getResponseFactory(),
-    $containerBuilder->build()
-);
+$app = AppFactory::createFromContainer($containerBuilder->build());
 
 // Boot application services
 $boot = require 'boot.php';
