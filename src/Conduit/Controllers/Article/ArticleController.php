@@ -97,11 +97,10 @@ class ArticleController extends BaseController
      * Create and store a new Article
      *
      * @param Request  $request
-     * @param Response $response
      *
      * @return Response
      */
-    public function store(Request $request, Response $response)
+    public function store(Request $request)
     {
         $requestData = $request->getParsedBody();
         $requestUser = $this->auth->requestUser($request);
