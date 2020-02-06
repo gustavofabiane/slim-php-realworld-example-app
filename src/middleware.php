@@ -11,6 +11,8 @@ use Conduit\Middleware\RemoveTrailingSlash;
 return function (App $app): void {
     $settings = $app->getContainer()->get('settings');
 
+    $app->addRoutingMiddleware();
+
     $errorMiddleware = $app->addErrorMiddleware(
         $settings['error']['display_error_details'],
         $settings['error']['log_errors'],
@@ -22,8 +24,6 @@ return function (App $app): void {
     ));
 
     $app->addBodyParsingMiddleware();
-    $app->addRoutingMiddleware();
-
     $app->add(RemoveTrailingSlash::class);
     $app->add(Cors::class);
 };
