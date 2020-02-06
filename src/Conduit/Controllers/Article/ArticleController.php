@@ -60,15 +60,15 @@ class ArticleController extends BaseController
             $builder->limit($limit);
         }
 
+        $articlesCount = $builder->count();
+
         if ($offset = $requestData['offset'] ?? null) {
             $builder->offset($offset);
         }
 
-        $articlesCount = $builder->count();
         $articles = $builder->get();
-
-        $data = $this->fractal->createData(new Collection($articles,
-            new ArticleTransformer($requestUserId)))->toArray();
+        
+        $data = $this->fractal->createData(new Collection($articles, new ArticleTransformer($requestUserId)))->toArray();
 
         return $this->jsonResponse(['articles' => $data['data'], 'articlesCount' => $articlesCount]);
     }
