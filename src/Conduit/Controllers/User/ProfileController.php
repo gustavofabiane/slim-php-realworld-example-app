@@ -2,35 +2,16 @@
 
 namespace Conduit\Controllers\User;
 
+use Conduit\Controllers\BaseController;
 use Conduit\Models\User;
 use Conduit\Transformers\ProfileTransformer;
 use Conduit\Transformers\UserTransformer;
-use Interop\Container\ContainerInterface;
 use League\Fractal\Resource\Item;
-use Slim\Http\Request;
-use Slim\Http\Response;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
 
-class ProfileController
+class ProfileController extends BaseController
 {
-
-    /** @var \Conduit\Services\Auth\Auth */
-    protected $auth;
-    /** @var \League\Fractal\Manager */
-    protected $fractal;
-
-    /**
-     * UserController constructor.
-     *
-     * @param \Interop\Container\ContainerInterface $container
-     *
-     * @internal param $auth
-     */
-    public function __construct(ContainerInterface $container)
-    {
-        $this->auth = $container->get('auth');
-        $this->fractal = $container->get('fractal');
-    }
-
     public function show(Request $request, Response $response, array $args)
     {
         $user = User::where('username', $args['username'])->firstOrFail();
@@ -41,7 +22,7 @@ class ProfileController
             $followingStatus = $requestUser->isFollowing($user->id);
         }
 
-        return $response->withJson(
+        return $this->jsonResponse(
             [
                 'profile' => [
                     'username'  => $user->username,
@@ -60,7 +41,7 @@ class ProfileController
 
         $requestUser->follow($user->id);
 
-        return $response->withJson(
+        return $this->jsonResponse(
             [
                 'profile' => [
                     'username'  => $user->username,
@@ -79,7 +60,7 @@ class ProfileController
 
         $requestUser->unFollow($user->id);
 
-        return $response->withJson(
+        return $this->jsonResponse(
             [
                 'profile' => [
                     'username'  => $user->username,

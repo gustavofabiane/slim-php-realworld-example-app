@@ -2,58 +2,32 @@
 
 namespace Conduit\Controllers\User;
 
+use Conduit\Controllers\BaseController;
 use Conduit\Transformers\UserTransformer;
-use Interop\Container\ContainerInterface;
 use League\Fractal\Resource\Item;
-use Slim\Http\Request;
-use Slim\Http\Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
 use Respect\Validation\Validator as v;
 
-class UserController
+class UserController extends BaseController
 {
-
-    /** @var \Conduit\Services\Auth\Auth */
-    protected $auth;
-    /** @var \League\Fractal\Manager */
-    protected $fractal;
-    /** @var \Illuminate\Database\Capsule\Manager */
-    protected $db;
-    /** @var \Conduit\Validation\Validator */
-    protected $validator;
-
-    /**
-     * UserController constructor.
-     *
-     * @param \Interop\Container\ContainerInterface $container
-     *
-     * @internal param $auth
-     */
-    public function __construct(ContainerInterface $container)
-    {
-        $this->auth = $container->get('auth');
-        $this->fractal = $container->get('fractal');
-        $this->validator = $container->get('validator');
-        $this->db = $container->get('db');
-    }
-
-    public function show(Request $request, Response $response)
+    public function show(Request $request)
     {
         if ($user = $this->auth->requestUser($request)) {
             $data = $this->fractal->createData(new Item($user, new UserTransformer()))->toArray();
 
-            return $response->withJson(['user' => $data]);
+            return $this->jsonResponse(['user' => $data]);
         };
     }
 
-    public function update(Request $request, Response $response)
+    public function update(Request $request)
     {
         if ($user = $this->auth->requestUser($request)) {
-            $requestParams = $request->getParam('user');
+            $requestParams = $request->getParsedBody()['user'] ?? null;
 
             $validation = $this->validateUpdateRequest($requestParams, $user->id);
 
             if ($validation->failed()) {
-                return $response->withJson(['errors' => $validation->getErrors()], 422);
+                return $this->jsonResponse(['errors' => $validation->getErrors()], 422);
             }
 
             $user->update([
@@ -67,7 +41,7 @@ class UserController
 
             $data = $this->fractal->createData(new Item($user, new UserTransformer()))->toArray();
 
-            return $response->withJson(['user' => $data]);
+            return $this->jsonResponse(['user' => $data]);
         };
     }
 

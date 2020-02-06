@@ -2,52 +2,26 @@
 
 namespace Conduit\Controllers\Article;
 
+use Conduit\Controllers\BaseController;
 use Conduit\Models\Article;
 use Conduit\Models\Comment;
-use Conduit\Transformers\ArticleTransformer;
 use Conduit\Transformers\CommentTransformer;
-use Interop\Container\ContainerInterface;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
-use Slim\Http\Request;
-use Slim\Http\Response;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
 use Respect\Validation\Validator as v;
 
-class CommentController
+class CommentController extends BaseController
 {
-
-    /** @var \Conduit\Validation\Validator */
-    protected $validator;
-    /** @var \Illuminate\Database\Capsule\Manager */
-    protected $db;
-    /** @var \Conduit\Services\Auth\Auth */
-    protected $auth;
-    /** @var \League\Fractal\Manager */
-    protected $fractal;
-
-    /**
-     * UserController constructor.
-     *
-     * @param \Interop\Container\ContainerInterface $container
-     *
-     * @internal param $auth
-     */
-    public function __construct(ContainerInterface $container)
-    {
-        $this->auth = $container->get('auth');
-        $this->fractal = $container->get('fractal');
-        $this->validator = $container->get('validator');
-        $this->db = $container->get('db');
-    }
-
     /**
      * Return a all Comment for an article
      *
-     * @param \Slim\Http\Request  $request
-     * @param \Slim\Http\Response $response
-     * @param array               $args
+     * @param Request  $request
+     * @param Response $response
+     * @param array    $args
      *
-     * @return \Slim\Http\Response
+     * @return Response
      */
     public function index(Request $request, Response $response, array $args)
     {
@@ -58,18 +32,17 @@ class CommentController
         $data = $this->fractal->createData(new Collection($article->comments,
             new CommentTransformer($requestUserId)))->toArray();
 
-        return $response->withJson(['comments' => $data['data']]);
+        return $this->jsonResponse(['comments' => $data['data']]);
     }
 
     /**
      * Create a new comment
      *
-     * @param \Slim\Http\Request  $request
-     * @param \Slim\Http\Response $response
+     * @param Request  $request
+     * @param Response $response
+     * @param array    $args
      *
-     * @param array               $args
-     *
-     * @return \Slim\Http\Response
+     * @return Response
      */
     public function store(Request $request, Response $response, array $args)
     {
@@ -77,16 +50,16 @@ class CommentController
         $requestUser = $this->auth->requestUser($request);
 
         if (is_null($requestUser)) {
-            return $response->withJson([], 401);
+            return $this->jsonResponse([], 401);
         }
 
-        $this->validator->validateArray($data = $request->getParam('comment'),
+        $this->validator->validateArray($data = $request->getParsedBody()['comment'],
             [
                 'body' => v::notEmpty(),
             ]);
 
         if ($this->validator->failed()) {
-            return $response->withJson(['errors' => $this->validator->getErrors()], 422);
+            return $this->jsonResponse(['errors' => $this->validator->getErrors()], 422);
         }
 
         $comment = Comment::create([
@@ -97,18 +70,18 @@ class CommentController
 
         $data = $this->fractal->createData(new Item($comment, new CommentTransformer()))->toArray();
 
-        return $response->withJson(['comment' => $data]);
+        return $this->jsonResponse(['comment' => $data]);
 
     }
 
     /**
      * Delete A Comment Endpoint
      *
-     * @param \Slim\Http\Request  $request
-     * @param \Slim\Http\Response $response
-     * @param array               $args
+     * @param Request  $request
+     * @param Response $response
+     * @param array    $args
      *
-     * @return \Slim\Http\Response
+     * @return Response
      */
     public function destroy(Request $request, Response $response, array $args)
     {
@@ -116,16 +89,16 @@ class CommentController
         $requestUser = $this->auth->requestUser($request);
 
         if (is_null($requestUser)) {
-            return $response->withJson([], 401);
+            return $this->jsonResponse([], 401);
         }
 
         if ($requestUser->id != $comment->user_id) {
-            return $response->withJson(['message' => 'Forbidden'], 403);
+            return $this->jsonResponse(['message' => 'Forbidden'], 403);
         }
 
         $comment->delete();
 
-        return $response->withJson([], 200);
+        return $this->jsonResponse([], 200);
     }
 
 }
