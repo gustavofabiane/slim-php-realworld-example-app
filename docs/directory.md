@@ -16,24 +16,23 @@ src/Conduit
 │   │   ├── LoginController.php
 │   │   └── RegisterController.php
 │   ├── BaseController.php
-│   └── User # User/Profile related endpoints
-│       ├── ProfileController.php
-│       └── UserController.php
+│   ├── User # User/Profile related endpoints
+│   |   ├── ProfileController.php
+│   |   └── UserController.php
+|   └── BaseController.php # Other controllers extends basic behavior from BaseController
 ├── Exceptions # Mainly to handle ModelNotFoundException and return 404 response.
 │   └── ErrorHandler.php 
 ├── Middleware # Custom middlewares should be defined here.
+│   └── Cors.php # Middleware that handle CORS options
 │   └── OptionalAuth.php # Middleware for optional routes when the reqest has token.
+│   └── RemoveTrailingSlash.php # Remove trailing slash from URI path.
 ├── Models
 │   ├── Article.php
 │   ├── Comment.php
 │   ├── Tag.php
 │   └── User.php
-├── Services
-│   ├── Auth
-│   │   ├── Auth.php # Generate JWT Token and retrieve request user
-│   │   └── AuthServiceProvider.php
-│   └── Database
-│       └── EloquentServiceProvider.php
+├── Services/Auth
+│   └── Auth.php # Generate JWT Token and retrieve request user
 ├── Transformers # Transform Models into JSON for response
 │   ├── ArticleTransformer.php
 │   ├── AuthorTransformer.php
@@ -69,12 +68,12 @@ src/Conduit
 │   └── index.php
 ├── src # The App Code
 │   ├── Conduit
+│   ├── app.php
+│   ├── boot.php
 │   ├── dependencies.php
 │   ├── middleware.php
 │   ├── routes.php
 │   └── settings.php
-├── templates
-│   └── index.phtml
 ├── tests
 │   ├── Functional
 │   ├── Unit
