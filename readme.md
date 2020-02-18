@@ -83,6 +83,9 @@ The app is built using **[Slim](https://www.slimframework.com/)**. However, ther
 composer install
 ```
 **List of Dependencies**
+- [php-di/php-di](http://php-di.org/) PSR-11 Container implemenation dependency management
+- [nyholm/psr7](https://github.com/Nyholm/psr7) PSR-7 and PSR-17 implementations
+- [nyholm/psr7-server](https://github.com/Nyholm/psr7-server) PSR-7 server creation helpers
 - [tuupola/slim-jwt-auth](https://appelsiini.net/projects/slim-jwt-auth/) To manage the api authentication using JWT.
 - [respect/validation](http://respect.github.io/Validation/) Validate the request parameters.
 - [league/fractal](https://fractal.thephpleague.com/) Transfer data models to JSON for the Api responses.
@@ -103,7 +106,8 @@ The `.env` is loaded using `vlucas/phpdotenv` through these [lines of code](http
 ## Directory Structure
 > Open the project directory using your favorite editor.
 
-The app follows the structure of [Slim skeleton application](https://github.com/slimphp/Slim-Skeleton) with minor changes.
+The app follows the structure of [Slim 3 skeleton application](https://github.com/slimphp/Slim-Skeleton/tree/3.1.8) with minor changes. 
+After upgrade from Slim 4 the structure were adapted to work with the new version of the framework, that is based on the [new skeleton for Slim 4](https://github.com/slimphp/Slim-Skeleton).
 The skeleton is a good starting point when developing with Slim framework.
 A detailed overview of the directory structure can be found at [this page](docs/directory.md).  
 
@@ -180,14 +184,14 @@ You can check the api by visiting [http://localhost:8080/api/articles](http://lo
 > There is Postman [collection made by Thinkster](https://github.com/gothinkster/realworld/blob/master/api/Conduit.postman_collection.json) team you could use.
 ### Entry Point:
 The server will direct all requests to [index.php](public/index.php). 
-There, we boot the app by creating an instance of Slim\App and require all the settings and relevant files.
-
-Finally, we run the app by calling `$app->run()`, which will process the request and send the response.
+There, we get the application instance from `app.php` where all dependencies, routes and middleware are defined.
 > We include four important files into the index.php: `settings.php`, `dependencies.php`, `middleware.php`, `routes.php`
 > I's a good idea to check them before continuing. 
 
+Finally, we run the app by calling `$app->run()`, which will process the request and send the response.
+
 ### The App Instance
-The instance of Slim\App (`$app`) holds the app settings, routes, and dependencies.
+The instance of Slim\App (`$app`) which extends from Slim\Interfaces\RouteCollectorProxyInterface and holds the app settings, routes, and dependencies.
 
 We register routes and methods by calling methods on the `$app` instance. 
 
@@ -200,56 +204,85 @@ Later, when we need a service or a class we ask the container, and it will insta
 
 The container is configured in the [dependencies.php](src/dependencies.php).
 We start be retrieving the container from the `$app` instance and configure the required services: 
+Dependencies are registered by the `$containerBuilder` instance with array of definitions where array keys are the dependenci identifier and 
+its value the dependency resolver. We recommend to check [PHP-DI docs](http://php-di.org/doc/definition.html) for more information on Container definitions.
 ```php
-    $container = $app->getContainer();
-    
-    $container['logger'] = function ($c) {
-        $settings = $c->get('settings')['logger'];
-        $logger = new Monolog\Logger($settings['name']);
-        $logger->pushProcessor(new Monolog\Processor\UidProcessor());
-        $logger->pushHandler(new Monolog\Handler\StreamHandler($settings['path'], $settings['level']));
-    
-        return $logger;
+    use function DI\get;
+
+    /**
+     * Application dependencies definitions
+     */
+    return function (ContainerBuilder $containerBuilder): void {
+        
+        $containerBuilder->addDefinitions([
+            LoggerInterface::class => get('logger'),
+            'logger' => function ($c) {
+                $settings = $c->get('settings')['logger'];
+                $logger = new Logger($settings['name']);
+                $logger->pushProcessor(new UidProcessor());
+                $logger->pushHandler(new StreamHandler($settings['path'], $settings['level']));
+            
+                return $logger;
+            },
+        ]);
     };
 ```
 The above code registers a configured instance of the `logger` in the container. Later we can ask for the `logger`
 ```php
+    $container = $containerBuilder->build();
+
     $logger = $container->get('logger');
     $logger->info('log message');
 ```
 
 We register two middleware with the container:
-> We will see them in action later in the [Authentication](#authentication-jwt) section.
+> We will see about `jwt` and `optionalAuth` in action later in the [Authentication](#authentication-jwt) section.
+
+> `RemoveTrailingSlash` and `Cors` are application level middleware.
 ```php
-    // Jwt Middleware
-    $container['jwt'] = function ($c) {
-    
-        $jws_settings = $c->get('settings')['jwt'];
-    
-        return new \Slim\Middleware\JwtAuthentication($jws_settings);
-    };
-    
-    // Optional Auth Middleware
-    $container['optionalAuth'] = function ($c) {
-      return new OptionalAuth($c);
-    };
+    // Middleware definitions
+    $containerBuilder->addDefinitions([
+
+        // JWT Middleware
+        'jwt' => function ($c) {
+            return new JwtAuthentication($c->get('settings')['jwt']);
+        },
+
+        // Optional Auth Middleware
+        'optionalAuth' => function ($c) {
+            return new OptionalAuth($c->get('jwt'));
+        },
+
+        // Remove trailing slash from URI path
+        RemoveTrailingSlash::class => function () {
+            $responseFactory = NyholmPsr17Factory::getResponseFactory();
+            return new RemoveTrailingSlash($responseFactory);
+        },
+
+        // CORS middleware
+        Cors::class => function ($c) {
+            return new Cors($c->get('settings')['cors']);
+        },
+    ]);
 ``` 
 
-#### Service Providers
+#### Boot Services
 The above services example will not be instantiated until we call for them.
 However, we could use a service provider to have some services available without retrieving them from the container.
 
 Our app use Eloquent ORM to handle our data models. Eloquent must be configured and booted. 
-We do this in the [EloquentServiceProvider](src/Conduit/Services/Database/EloquentServiceProvider.php) class,
-and register the service provider with the container.
+We do this in the [boot.php](src/boot.php) file by retrieving the database manager from the container and 
+initializing Eloquent.
 ```php
-    $container->register(new \Conduit\Services\Database\EloquentServiceProvider());
+    $db = $container->get('db');
+    $db->setAsGlobal();
+    $db->bootEloquent();
 ```
-For more details check [Dependency Container](https://www.slimframework.com/docs/concepts/di.html) documentations.
+For more details check [Dependency Container](https://www.slimframework.com/docs/v4/concepts/di.html) documentations.
 
 
 ## Request-Response Cycle
-All requests go through the same cycle:  `routing > middleware > conroller > response`
+All requests go through the same cycle:  `routing > middleware > controller > response`
 ### Routes:
 > Check the list of endpoints defined by the [RealWorld API Spec](https://github.com/gothinkster/realworld/tree/master/api#endpoints)
 
@@ -282,10 +315,6 @@ for example.
 
 ### Controllers
 After passing through all assigned middleware, the request will be processed by a controller.
-> Note: You could process the request inside a closure passed as the second argument to the method defining the route.
-> For example, [the last route](https://github.com/alhoqbani/slim-php-realworld-example-app/blob/51ef4cba018673ba63ec2f8cb210effff26aaec5/src/routes.php#L88-L95),
-which is left as an example from the skeleton project, handles the request in a closure
-> [Check the documentations](https://www.slimframework.com/docs/objects/router.html#route-callbacks).
 
 The controller's job is to validate the request data, check for authorization, process the request by calling a model or do other jobs, 
 and eventually return a response in the form of JSON response. 
@@ -364,7 +393,7 @@ The authorization is handled by the controller. Simply, the controller will comp
 If not authorized, the controller will return a 403 response.
 ```php
         if ($requestUser->id != $article->user_id) {
-            return $response->withJson(['message' => 'Forbidden'], 403);
+            return $this->jsonResponse(['message' => 'Forbidden'], 403);
         }
 ```
 However, in a bigger application you might want to implement more robust authorization system.
